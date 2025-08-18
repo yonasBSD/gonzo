@@ -1,0 +1,28 @@
+# Gonzo Configuration File
+# Place this file at ~/.config/gonzo/config.yaml for automatic loading
+
+# Dashboard update frequency (Go duration format)
+# Examples: 1s, 500ms, 2s, 1m
+update-interval: 1s
+
+# Maximum number of log entries to keep in buffer
+# Higher values use more memory but show more history
+log-buffer: 1000
+
+# Maximum entries for frequency tracking
+# Higher values track more unique words/phrases but use more memory
+memory-size: 10000
+
+# Enable test mode for non-TTY environments
+# Useful for CI/CD pipelines or automated testing
+test-mode: false
+
+# Example: Increase buffer sizes for high-volume logging
+# update-interval: 2s
+# log-buffer: 5000
+# memory-size: 50000
+
+# Example: Minimal resource usage
+# update-interval: 5s
+# log-buffer: 500
+# memory-size: 5000

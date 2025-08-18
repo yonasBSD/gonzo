@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gonzo - Real-time Log Analysis Terminal UI</title>
+    <meta name="description" content="A powerful, real-time log analysis terminal UI inspired by k9s. Analyze log streams with beautiful charts, AI-powered insights, and advanced filtering.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --light-blue: #0F9EFC;
+            --black: #000000;
+            --green: #49E209;
+            --white: #FFFFFF;
+            --dark-blue: #081C39;
+            --gray: #BCBEC0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--black);
+            background-color: var(--white);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--light-blue) 100%);
+            color: var(--white);
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .hero {
+            padding: 4rem 0;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--white), var(--green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .mascot {
+            margin-bottom: 2rem;
+        }
+
+        .mascot img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .btn-primary {
+            background-color: var(--green);
+            color: var(--black);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--white);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--white);
+            border-color: var(--white);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--white);
+            color: var(--dark-blue);
+        }
+
+        .features {
+            padding: 4rem 0;
+            background-color: #f8f9fa;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--dark-blue);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            color: var(--dark-blue);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .screenshot-section {
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .screenshot-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--dark-blue);
+        }
+
+        .screenshot {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .installation {
+            background: var(--dark-blue);
+            color: var(--white);
+            padding: 4rem 0;
+        }
+
+        .installation h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .install-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .install-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .install-card h3 {
+            color: var(--green);
+            margin-bottom: 1rem;
+        }
+
+        .code-block {
+            background: var(--black);
+            color: var(--green);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        footer {
+            background: var(--black);
+            color: var(--white);
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--light-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-links a:hover {
+            color: var(--green);
+        }
+
+        .heart {
+            color: var(--green);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero .subtitle {
+                font-size: 1rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="hero">
+                <div class="mascot">
+                    <img src="gonzo-mascot-smaller.png" alt="Gonzo Mascot">
+                </div>
+                <h1>📊 Gonzo</h1>
+                <p class="subtitle">
+                    A powerful, real-time log analysis terminal UI inspired by k9s. 
+                    Analyze log streams with beautiful charts, AI-powered insights, and advanced filtering - all from your terminal.
+                </p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/control-theory/gonzo" class="btn btn-primary">View on GitHub</a>
+                    <a href="#installation" class="btn btn-secondary">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="features">
+        <div class="container">
+            <h2>✨ Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Real-Time Analysis</h3>
+                    <p>Process logs as they arrive from stdin with OTLP native support, automatic format detection, and color-coded severity tracking.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Interactive Dashboard</h3>
+                    <p>k9s-inspired 2x2 grid interface with real-time charts, vim-style navigation, and expandable modal views for deep log analysis.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Advanced Filtering</h3>
+                    <p>Filter logs with regex support, attribute search, severity filtering, and interactive keyboard/mouse navigation.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI-Powered Insights</h3>
+                    <p>Get intelligent pattern detection, anomaly analysis, and root cause suggestions. Works with OpenAI, Ollama, LM Studio, and more.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="screenshot-section">
+        <div class="container">
+            <h2>See Gonzo in Action</h2>
+            <img src="screenshot.png" alt="Gonzo Terminal UI Screenshot" class="screenshot">
+        </div>
+    </section>
+
+    <section id="installation" class="installation">
+        <div class="container">
+            <h2>🚀 Quick Installation</h2>
+            <div class="install-methods">
+                <div class="install-card">
+                    <h3>Using Go</h3>
+                    <p>Install directly with Go (requires Go 1.21+)</p>
+                    <div class="code-block">$ go install github.com/control-theory/gonzo/cmd/gonzo@latest</div>
+                </div>
+                <div class="install-card">
+                    <h3>Using Homebrew</h3>
+                    <p>Available on macOS and Linux via Homebrew</p>
+                    <div class="code-block">$ brew tap control-theory/gonzo<br>$ brew install gonzo</div>
+                </div>
+                <div class="install-card">
+                    <h3>Download Binary</h3>
+                    <p>Get the latest release for your platform</p>
+                    <div class="code-block">
+                        <a href="https://github.com/control-theory/gonzo/releases" style="color: var(--green); text-decoration: none;">
+                            → Download from GitHub Releases
+                        </a>
+                    </div>
+                </div>
+                <div class="install-card">
+                    <h3>Build from Source</h3>
+                    <p>Clone and build the project yourself</p>
+                    <div class="code-block">$ git clone https://github.com/control-theory/gonzo.git<br>$ cd gonzo<br>$ make build</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 3rem; text-align: center;">
+                <h3 style="color: var(--green); margin-bottom: 1rem;">Quick Start</h3>
+                <p>Start analyzing logs in seconds:</p>
+                <div class="code-block" style="display: inline-block; margin-top: 1rem;">
+                    # Analyze logs from a file<br>
+                    $ cat application.log | gonzo<br><br>
+                    # Stream Kubernetes logs<br>
+                    $ kubectl logs -f deployment/my-app | gonzo<br><br>
+                    # With AI analysis<br>
+                    $ export OPENAI_API_KEY=sk-your-key-here<br>
+                    $ cat logs.json | gonzo
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/control-theory/gonzo">GitHub Repository</a>
+                <a href="https://github.com/control-theory/gonzo/blob/main/USAGE_GUIDE.md">Usage Guide</a>
+                <a href="https://github.com/control-theory/gonzo/blob/main/CONTRIBUTING.md">Contributing</a>
+                <a href="https://github.com/control-theory/gonzo/releases">Releases</a>
+                <a href="https://github.com/control-theory/gonzo/issues">Report Issues</a>
+            </div>
+            <p style="margin-bottom: 1rem;">
+                Built with <span class="heart">❤️</span> by 
+                <a href="https://controltheory.com" style="color: var(--light-blue); text-decoration: none;">ControlTheory</a>
+            </p>
+            <p style="color: var(--gray); font-size: 0.9rem;">
+                Open source software licensed under MIT. 
+                <a href="https://github.com/control-theory/gonzo/blob/main/LICENSE" style="color: var(--gray);">View License</a>
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

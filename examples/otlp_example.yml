@@ -1,0 +1,71 @@
+# Example OpenTelemetry Collector configuration for sending logs to Gonzo
+
+receivers:
+  # Receive logs from various sources
+  filelog:
+    include: ["/var/log/*.log"]
+    start_at: beginning
+    operators:
+      - type: json_parser
+        timestamp:
+          parse_from: attributes.time
+          layout: "%Y-%m-%d %H:%M:%S"
+  
+  # Or receive OTLP logs from other applications
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4319
+      http:
+        endpoint: 0.0.0.0:4320
+
+processors:
+  # Add resource attributes
+  resource:
+    attributes:
+      - key: service.name
+        value: my-application
+        action: insert
+      - key: environment
+        value: production
+        action: insert
+  
+  # Batch logs for efficiency
+  batch:
+    timeout: 1s
+    send_batch_size: 100
+
+exporters:
+  # Send to Gonzo OTLP receiver via gRPC
+  otlp/gonzo_grpc:
+    endpoint: localhost:4317
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 10s
+      max_elapsed_time: 30s
+  
+  # Or send to Gonzo OTLP receiver via HTTP
+  otlphttp/gonzo_http:
+    endpoint: http://localhost:4318/v1/logs
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 10s
+      max_elapsed_time: 30s
+
+service:
+  pipelines:
+    # You can use either gRPC or HTTP, or both
+    logs_grpc:
+      receivers: [filelog, otlp]
+      processors: [resource, batch]
+      exporters: [otlp/gonzo_grpc]
+    
+    # Alternative pipeline using HTTP
+    # logs_http:
+    #   receivers: [filelog, otlp]
+    #   processors: [resource, batch]
+    #   exporters: [otlphttp/gonzo_http]
