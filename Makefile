@@ -70,25 +70,25 @@ cross-build: clean deps ## Build for multiple platforms
 	@echo "$(YELLOW)Building for linux/amd64...$(NC)"
 	@mkdir -p $(DIST_DIR)/linux-amd64
 	@CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=amd64 \
-		$(GO) build $(BUILD_FLAGS) -o $(DIST_DIR)/linux-amd64/$(BINARY_NAME) $(CMD_DIR)/$(BINARY_NAME)
+		$(GO) build $(BUILD_FLAGS) -o $(DIST_DIR)/linux-amd64/$(BINARY_NAME) $(CMD_DIR)
 	
 	# macOS amd64
 	@echo "$(YELLOW)Building for darwin/amd64...$(NC)"
 	@mkdir -p $(DIST_DIR)/darwin-amd64
 	@CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=amd64 \
-		$(GO) build $(BUILD_FLAGS) -o $(DIST_DIR)/darwin-amd64/$(BINARY_NAME) $(CMD_DIR)/$(BINARY_NAME)
+		$(GO) build $(BUILD_FLAGS) -o $(DIST_DIR)/darwin-amd64/$(BINARY_NAME) $(CMD_DIR)
 	
 	# macOS arm64
 	@echo "$(YELLOW)Building for darwin/arm64...$(NC)"
 	@mkdir -p $(DIST_DIR)/darwin-arm64
 	@CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=arm64 \
-		$(GO) build $(BUILD_FLAGS) -o $(DIST_DIR)/darwin-arm64/$(BINARY_NAME) $(CMD_DIR)/$(BINARY_NAME)
+		$(GO) build $(BUILD_FLAGS) -o $(DIST_DIR)/darwin-arm64/$(BINARY_NAME) $(CMD_DIR)
 	
 	# Windows amd64
 	@echo "$(YELLOW)Building for windows/amd64...$(NC)"
 	@mkdir -p $(DIST_DIR)/windows-amd64
 	@CGO_ENABLED=$(CGO_ENABLED) GOOS=windows GOARCH=amd64 \
-		$(GO) build $(BUILD_FLAGS) -o $(DIST_DIR)/windows-amd64/$(BINARY_NAME).exe $(CMD_DIR)/$(BINARY_NAME)
+		$(GO) build $(BUILD_FLAGS) -o $(DIST_DIR)/windows-amd64/$(BINARY_NAME).exe $(CMD_DIR)
 	
 	@echo "$(GREEN)✓ Cross-platform builds complete in $(DIST_DIR)/$(NC)"
 
