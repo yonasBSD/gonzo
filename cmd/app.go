@@ -104,20 +104,20 @@ type simpleTuiModel struct {
 	lastFreqReset  time.Time           // Track when frequency memory was last reset
 	timerSequence  int                 // Track timer sequence to avoid concurrent timers
 	hasStdinData   bool                // Whether stdin has data available
-	
+
 	// File reading support
-	fileReader     *filereader.FileReader // File reader for file input mode
-	inputChan      chan string             // Unified input channel (from stdin or files)
-	hasFileInput   bool                    // Whether we're reading from files
-	
+	fileReader   *filereader.FileReader // File reader for file input mode
+	inputChan    chan string            // Unified input channel (from stdin or files)
+	hasFileInput bool                   // Whether we're reading from files
+
 	// OTLP receiver support
-	otlpReceiver   *otlpreceiver.Receiver  // OTLP receiver for network input
-	hasOTLPInput   bool                    // Whether we're receiving OTLP data
-	
+	otlpReceiver *otlpreceiver.Receiver // OTLP receiver for network input
+	hasOTLPInput bool                   // Whether we're receiving OTLP data
+
 	// JSON accumulation for multi-line OTLP support
-	jsonBuffer     strings.Builder     // Buffer for accumulating multi-line JSON
-	jsonDepth      int                 // Track JSON object/array nesting depth
-	inJsonObject   bool                // Whether we're currently accumulating a JSON object
+	jsonBuffer   strings.Builder // Buffer for accumulating multi-line JSON
+	jsonDepth    int             // Track JSON object/array nesting depth
+	inJsonObject bool            // Whether we're currently accumulating a JSON object
 }
 
 // Init initializes the TUI model
@@ -133,7 +133,7 @@ func (m *simpleTuiModel) Init() tea.Cmd {
 		// OTLP input mode
 		m.hasOTLPInput = true
 		m.inputChan = make(chan string, 100)
-		
+
 		// Create and start OTLP receiver
 		m.otlpReceiver = otlpreceiver.NewReceiver(cfg.OTLPGRPCPort, cfg.OTLPHTTPPort)
 		if err := m.otlpReceiver.Start(); err != nil {
@@ -151,7 +151,7 @@ func (m *simpleTuiModel) Init() tea.Cmd {
 		// File input mode
 		m.hasFileInput = true
 		m.inputChan = make(chan string, 100)
-		
+
 		// Create file reader
 		var err error
 		m.fileReader, err = filereader.New(cfg.Files, cfg.Follow)
@@ -164,7 +164,7 @@ func (m *simpleTuiModel) Init() tea.Cmd {
 			go m.readFilesAsync()
 		}
 	}
-	
+
 	// If no OTLP, no file input or file input failed, check stdin
 	if !m.hasOTLPInput && !m.hasFileInput {
 		// Check if stdin has data available (not a terminal)
@@ -197,14 +197,14 @@ func (m *simpleTuiModel) Init() tea.Cmd {
 // readOTLPAsync reads from the OTLP receiver
 func (m *simpleTuiModel) readOTLPAsync() {
 	defer close(m.inputChan)
-	
+
 	if m.otlpReceiver == nil {
 		return
 	}
-	
+
 	// Get the channel from OTLP receiver
 	otlpLineChan := m.otlpReceiver.GetLineChan()
-	
+
 	// Forward lines from OTLP receiver to input channel
 	for {
 		select {
@@ -230,14 +230,14 @@ func (m *simpleTuiModel) readOTLPAsync() {
 // readFilesAsync reads from files using the FileReader
 func (m *simpleTuiModel) readFilesAsync() {
 	defer close(m.inputChan)
-	
+
 	if m.fileReader == nil {
 		return
 	}
-	
+
 	// Start the file reader and get the channel
 	fileLineChan := m.fileReader.Start()
-	
+
 	// Forward lines from file reader to input channel
 	for {
 		select {
@@ -263,7 +263,7 @@ func (m *simpleTuiModel) readFilesAsync() {
 // readStdinAsync reads from stdin in a goroutine without blocking
 func (m *simpleTuiModel) readStdinAsync() {
 	defer close(m.inputChan)
-	
+
 	scanner := bufio.NewScanner(os.Stdin)
 
 	// Set larger buffer size (1MB) to handle long OTLP JSON lines
@@ -273,13 +273,13 @@ func (m *simpleTuiModel) readStdinAsync() {
 
 	// Channel to receive scan results
 	scanChan := make(chan bool, 1)
-	
+
 	for {
 		// Start scanning in a separate goroutine
 		go func() {
 			scanChan <- scanner.Scan()
 		}()
-		
+
 		// Wait for either scan result or context cancellation
 		select {
 		case <-m.ctx.Done():
@@ -289,7 +289,7 @@ func (m *simpleTuiModel) readStdinAsync() {
 				// EOF or error - exit gracefully
 				break
 			}
-			
+
 			line := scanner.Text()
 			if line != "" {
 				select {
@@ -299,11 +299,6 @@ func (m *simpleTuiModel) readStdinAsync() {
 				}
 			}
 		}
-	}
-
-	// Check for errors (but not context cancellation)
-	if err := scanner.Err(); err != nil && m.ctx.Err() == nil {
-		log.Printf("Scanner error: %v", err)
 	}
 }
 
