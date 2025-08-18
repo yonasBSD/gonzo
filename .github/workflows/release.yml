@@ -37,9 +37,5 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           GO_VERSION: ${{ env.GO_VERSION }}
-
-      - name: Update Homebrew tap
-        if: success()
-        run: |
-          echo "Homebrew formula will be automatically updated in control-theory/homebrew-gonzo"

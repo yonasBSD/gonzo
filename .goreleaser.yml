@@ -70,6 +70,8 @@ brews:
       owner: control-theory
       name: homebrew-gonzo
       branch: main
+      # Use a separate token for tap access
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: "https://github.com/control-theory/gonzo"
     description: "Gonzo! The Go based TUI log analysis tool"
     license: "MIT"
