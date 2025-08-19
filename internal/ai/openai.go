@@ -13,13 +13,13 @@ import (
 
 // OpenAIClient handles OpenAI API compatible requests
 type OpenAIClient struct {
-	APIKey        string
-	BaseURL       string
-	Model         string
-	HTTPClient    *http.Client
-	Validated     bool
-	ValidationErr string
-	ServiceName   string
+	APIKey          string
+	BaseURL         string
+	Model           string
+	HTTPClient      *http.Client
+	Validated       bool
+	ValidationErr   string
+	ServiceName     string
 	AvailableModels []string
 	AutoSelectModel bool // True if no model was specified, should auto-select
 }
@@ -38,8 +38,8 @@ type Message struct {
 
 // OpenAIResponse represents the API response with flexible error handling
 type OpenAIResponse struct {
-	Choices []Choice    `json:"choices"`
-	Error   any `json:"error,omitempty"` // Can be string or object
+	Choices []Choice `json:"choices"`
+	Error   any      `json:"error,omitempty"` // Can be string or object
 }
 
 // Choice represents a response choice
@@ -94,12 +94,12 @@ func (r *OpenAIResponse) getErrorMessage() string {
 	if r.Error == nil {
 		return ""
 	}
-	
+
 	// Handle string error format (like LM Studio)
 	if errStr, ok := r.Error.(string); ok {
 		return errStr
 	}
-	
+
 	// Handle object error format (like OpenAI)
 	if errMap, ok := r.Error.(map[string]any); ok {
 		if message, exists := errMap["message"]; exists {
@@ -111,7 +111,7 @@ func (r *OpenAIResponse) getErrorMessage() string {
 		jsonBytes, _ := json.Marshal(r.Error)
 		return string(jsonBytes)
 	}
-	
+
 	// Fallback to string representation
 	return fmt.Sprintf("%v", r.Error)
 }
@@ -157,7 +157,7 @@ func NewOpenAIClient(model string) *OpenAIClient {
 		ServiceName:     serviceName,
 		AutoSelectModel: autoSelectModel,
 		HTTPClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: 60 * time.Second,
 		},
 	}
 
@@ -227,7 +227,7 @@ func (c *OpenAIClient) AnalyzeLog(logMessage, severity, timestamp string, attrib
 		if flexErr := json.Unmarshal(bodyBytes, &flexResponse); flexErr != nil {
 			return "", fmt.Errorf("failed to decode response: %v (body: %s)", err, string(bodyBytes))
 		}
-		
+
 		// Try to extract response manually from flexible structure
 		if choices, ok := flexResponse["choices"].([]any); ok && len(choices) > 0 {
 			if choice, ok := choices[0].(map[string]any); ok {
@@ -238,7 +238,7 @@ func (c *OpenAIClient) AnalyzeLog(logMessage, severity, timestamp string, attrib
 				}
 			}
 		}
-		
+
 		return "", fmt.Errorf("failed to parse response structure: %v (body: %s)", err, string(bodyBytes))
 	}
 
@@ -332,7 +332,7 @@ Log Details (for reference):
 		if flexErr := json.Unmarshal(bodyBytes, &flexResponse); flexErr != nil {
 			return "", fmt.Errorf("failed to decode response: %v (body: %s)", err, string(bodyBytes))
 		}
-		
+
 		// Try to extract response manually from flexible structure
 		if choices, ok := flexResponse["choices"].([]any); ok && len(choices) > 0 {
 			if choice, ok := choices[0].(map[string]any); ok {
@@ -343,7 +343,7 @@ Log Details (for reference):
 				}
 			}
 		}
-		
+
 		return "", fmt.Errorf("failed to parse response structure: %v (body: %s)", err, string(bodyBytes))
 	}
 
@@ -415,7 +415,7 @@ func (c *OpenAIClient) ValidateConfiguration() {
 			c.ValidationErr = "No models available from AI service"
 			return
 		}
-		
+
 		// Smart model selection: prefer common models or pick first available
 		selectedModel := c.selectBestDefaultModel(models)
 		c.Model = selectedModel
@@ -496,7 +496,7 @@ func (c *OpenAIClient) GetAvailableModels() ([]string, error) {
 func (c *OpenAIClient) getOllamaModels() ([]string, error) {
 	// Remove /v1 suffix if present for Ollama native API
 	baseURL := strings.TrimSuffix(c.BaseURL, "/v1")
-	
+
 	req, err := http.NewRequest("GET", baseURL+"/api/tags", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
@@ -534,7 +534,7 @@ func (c *OpenAIClient) getOllamaModels() ([]string, error) {
 func (c *OpenAIClient) analyzeWithOllama(prompt string) (string, error) {
 	// Remove /v1 suffix if present for Ollama native API
 	baseURL := strings.TrimSuffix(c.BaseURL, "/v1")
-	
+
 	request := OllamaGenerateRequest{
 		Model:  c.Model,
 		Prompt: prompt,
@@ -581,17 +581,17 @@ func (c *OpenAIClient) selectBestDefaultModel(availableModels []string) string {
 	if len(availableModels) == 0 {
 		return ""
 	}
-	
+
 	// Preferred models in order of preference
 	preferredModels := []string{
-		"gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini",       // OpenAI GPT-4 variants
-		"gpt-3.5-turbo", "gpt-3.5-turbo-16k",                  // OpenAI GPT-3.5 variants
-		"gpt-oss:20b", "gpt-oss:7b", "gpt-oss",                // OSS GPT models (common in Ollama)
-		"llama3", "llama3.1", "llama3:8b", "llama3:70b",       // Ollama Llama variants
-		"mistral", "mistral:7b", "mistral:latest",              // Ollama Mistral variants
-		"codellama", "codellama:7b", "codellama:13b",           // Ollama CodeLlama variants
+		"gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini", // OpenAI GPT-4 variants
+		"gpt-3.5-turbo", "gpt-3.5-turbo-16k", // OpenAI GPT-3.5 variants
+		"gpt-oss:20b", "gpt-oss:7b", "gpt-oss", // OSS GPT models (common in Ollama)
+		"llama3", "llama3.1", "llama3:8b", "llama3:70b", // Ollama Llama variants
+		"mistral", "mistral:7b", "mistral:latest", // Ollama Mistral variants
+		"codellama", "codellama:7b", "codellama:13b", // Ollama CodeLlama variants
 	}
-	
+
 	// First, try to find any preferred model (exact match)
 	for _, preferred := range preferredModels {
 		for _, available := range availableModels {
@@ -600,7 +600,7 @@ func (c *OpenAIClient) selectBestDefaultModel(availableModels []string) string {
 			}
 		}
 	}
-	
+
 	// Second, try case-insensitive partial matches with preferred models
 	for _, preferred := range preferredModels {
 		lowerPreferred := strings.ToLower(preferred)
@@ -611,7 +611,7 @@ func (c *OpenAIClient) selectBestDefaultModel(availableModels []string) string {
 			}
 		}
 	}
-	
+
 	// Fallback: return the first available model
 	return availableModels[0]
 }
