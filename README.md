@@ -7,6 +7,9 @@
 
 A powerful, real-time log analysis terminal UI inspired by k9s. Analyze log streams with beautiful charts, AI-powered insights, and advanced filtering - all from your terminal.
 
+### See it in action
+![Gonzo Walkthrough](docs/gonzo_video_walkthrough.gif)
+
 ### Main Dashboard
 ![Gonzo Main Dashboard](docs/gonzo-main.png)
 
