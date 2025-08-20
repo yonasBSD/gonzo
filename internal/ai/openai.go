@@ -393,8 +393,6 @@ Keep your response concise but informative. Focus on practical insights that wou
 // ValidateConfiguration checks if the AI client is properly configured
 func (c *OpenAIClient) ValidateConfiguration() {
 	if c == nil {
-		c.Validated = false
-		c.ValidationErr = "No API key configured"
 		return
 	}
 
