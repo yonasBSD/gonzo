@@ -3,7 +3,7 @@
 
 # Project configuration
 BINARY_NAME := gonzo
-CMD_DIR := ./cmd
+CMD_DIR := ./cmd/gonzo
 BUILD_DIR := ./build
 DIST_DIR := ./dist
 
