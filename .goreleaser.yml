@@ -12,7 +12,7 @@ before:
 
 builds:
   - id: gonzo
-    main: ./cmd
+    main: ./cmd/gonzo
     binary: gonzo
     env:
       - CGO_ENABLED=0
