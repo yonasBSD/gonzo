@@ -484,6 +484,34 @@ gonzo completion powershell | Out-String | Invoke-Expression
 
 For permanent setup, save the completion script to your shell's completion directory.
 
+### K9s Integration
+By leveraging [K9s plugin system](https://k9scli.io/topics/plugins/) Gonzo integrates seamlessly with K9s for real-time Kubernetes log analysis.
+
+#### Setup
+Add this plugin to your `$XDG_CONFIG_HOME/k9s/plugins.yaml` file:
+
+```yaml
+plugins:
+  gonzo:
+    shortCut: Ctrl-L
+    description: "Gonzo log analysis"
+    scopes:
+    - po
+    command: sh
+    background: false
+    args:
+    - -c
+    - "kubectl logs -f $NAME -n $NAMESPACE --context $CONTEXT | gonzo"
+```
+
+> ⚠️ NOTE: on `macOS` although it is not required, defining `XDG_CONFIG_HOME=~/.config` is recommended in order to maintain consistency with Linux configuration practices.
+
+
+#### Usage
+1. Launch k9s and navigate to pods
+2. Select a pod and press `ctrl-l`
+3. Gonzo opens with live log streaming and analysis
+
 ## 🏗️ Architecture
 
 Gonzo is built with:
