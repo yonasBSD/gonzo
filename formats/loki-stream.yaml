@@ -1,0 +1,49 @@
+# Loki Stream Format (Single JSON Objects per Line)
+# This format handles Loki's streaming format where each line is a JSON object
+# containing labels and the log line.
+#
+# Example log lines from lokiclisample.json:
+# {"labels":{"detected_level":"Error","host_name":"node-1","http_method":"GET",...},"line":"Log 79: Error phase: finish","timestamp":"2025-09-14T11:48:24.736589923-05:00"}
+#
+# Structure:
+# - labels: Object containing metadata about the log (nested object)
+#   ALL fields from labels are automatically extracted as attributes
+# - line: The actual log message
+# - timestamp: When the log was generated (RFC3339 format)
+
+name: loki-stream
+description: Loki log stream format with automatic labels extraction
+author: Gonzo Community
+type: json  # 'json' type for JSON-structured logs
+
+# No json.fields mapping - use the raw JSON structure
+# This preserves all the original fields for direct access
+
+mapping:
+  # Extract and parse the timestamp
+  timestamp:
+    field: timestamp
+    time_format: rfc3339    # Loki uses RFC3339 format
+
+  # The 'line' field contains the actual log message
+  body:
+    field: line
+
+  # Extract severity from labels.detected_level or labels.severity_text
+  severity:
+    field: labels.detected_level    # First try detected_level
+    transform: uppercase            # Normalize to uppercase
+    default: INFO                   # Default to INFO if not present
+
+  # Auto-map all unmapped fields as attributes (including all labels)
+  auto_map_remaining: true
+
+  # Attributes are automatically extracted from the labels object
+  # All fields in labels.* will become attributes
+  # You can still explicitly map specific fields if you need transforms
+  attributes:
+    # Example of explicit mapping with transform (optional)
+    # Most fields will be auto-extracted from labels
+    http_status_severity:
+      field: labels.http_status_code
+      transform: status_to_severity
