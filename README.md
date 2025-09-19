@@ -735,6 +735,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Contributing Guide](CONTRIBUTING.md) - How to contribute
 - [Changelog](CHANGELOG.md) - Version history
 
+## 💬 Slack Community
+
+- [Invite/Join](https://join.slack.com/t/ctrltheorycommunity/shared_invite/zt-3dr6rke5w-GlcRaW2bvn4zcSaV8byZgA)
+- [Channel Link](https://ctrltheorycommunity.slack.com)
+
 ## 🐛 Reporting Issues
 
 Found a bug? Please [open an issue](https://github.com/control-theory/gonzo/issues/new) with:
