@@ -25,6 +25,11 @@ func (m *DashboardModel) renderModalOverlay() string {
 		return m.renderModelSelectionModal()
 	}
 
+	// Check for severity filter modal
+	if m.showSeverityFilterModal {
+		return m.renderSeverityFilterModal()
+	}
+
 	// Check if this is a log details modal
 	isLogDetailsModal := m.currentLogEntry != nil
 
@@ -381,6 +386,7 @@ NAVIGATION:
 ACTIONS:
   /              - Activate filter (regex supported)
   s              - Search and highlight text in logs
+  Ctrl+f         - Open severity filter modal
   f              - Open fullscreen log viewer modal
   Space          - Pause/unpause UI updates
   c              - Toggle Host/Service columns in log view
@@ -408,6 +414,7 @@ SECTIONS:
 FILTER & SEARCH:
   Filter (/): Type regex patterns to filter displayed logs
   Search (s): Type text to highlight in displayed logs
+  Severity (Ctrl+f): Filter by log severity levels
   Examples: "error", "k8s.*pod", "severity.*INFO"
 
 AI ANALYSIS:
@@ -1131,48 +1138,48 @@ func getSeverityColor(severity string) lipgloss.Color {
 // renderLogViewerModal renders the log viewer in a fullscreen modal
 func (m *DashboardModel) renderLogViewerModal() string {
 	// Calculate modal dimensions - leave space for borders
-	modalWidth := m.width - 4     // Leave margin for borders
-	modalHeight := m.height - 2   // Leave margin for borders
-	
+	modalWidth := m.width - 4   // Leave margin for borders
+	modalHeight := m.height - 2 // Leave margin for borders
+
 	// Inner content dimensions (accounting for borders)
 	contentWidth := modalWidth - 2   // -2 for left/right borders
-	contentHeight := modalHeight - 2  // -2 for top/bottom borders
-	
+	contentHeight := modalHeight - 2 // -2 for top/bottom borders
+
 	// Reserve space for header and status
 	headerHeight := 1
 	statusHeight := 1
 	logAreaHeight := contentHeight - headerHeight - statusHeight
-	
+
 	// Get log content without border wrapper
 	logLines := m.renderLogScrollContent(logAreaHeight, contentWidth)
-	
+
 	// Create header
 	header := lipgloss.NewStyle().
 		Foreground(ColorBlue).
 		Bold(true).
 		Width(contentWidth).
 		Render("Log Viewer")
-	
+
 	// Create log content area with fixed height
 	logArea := lipgloss.NewStyle().
 		Width(contentWidth).
 		Height(logAreaHeight).
 		Render(lipgloss.JoinVertical(lipgloss.Left, logLines...))
-	
+
 	// Create status line with filter/search indicators
 	var statusLeft string
-	
+
 	// Check for active filter/search (including while being typed)
 	hasActiveFilter := m.filterActive || m.filterRegex != nil || m.filterInput.Value() != ""
 	hasActiveSearch := m.searchActive || m.searchTerm != "" || m.searchInput.Value() != ""
-	
+
 	// Build status message
 	statusParts := []string{fmt.Sprintf("Total: %d", len(m.logEntries))}
-	
+
 	if m.viewPaused {
 		statusParts = append(statusParts, "⏸ PAUSED")
 	}
-	
+
 	if hasActiveFilter {
 		if m.filterActive {
 			// Currently editing filter
@@ -1184,11 +1191,11 @@ func (m *DashboardModel) renderLogViewerModal() string {
 			}
 		} else if m.filterRegex != nil {
 			// Filter applied
-			statusParts = append(statusParts, fmt.Sprintf("🔍 Filter: [%s] (%d/%d)", 
+			statusParts = append(statusParts, fmt.Sprintf("🔍 Filter: [%s] (%d/%d)",
 				m.filterInput.Value(), len(m.logEntries), len(m.allLogEntries)))
 		}
 	}
-	
+
 	if hasActiveSearch {
 		if m.searchActive {
 			// Currently editing search
@@ -1203,18 +1210,18 @@ func (m *DashboardModel) renderLogViewerModal() string {
 			statusParts = append(statusParts, fmt.Sprintf("🔎 Search: [%s]", m.searchTerm))
 		}
 	}
-	
+
 	statusLeft = strings.Join(statusParts, " | ")
-	
+
 	// Create concise help text that fits
 	helpText := "ESC:Close ↑↓:Nav Enter:Details /:Filter s:Search c:Columns"
-	
+
 	// Calculate available space for each side
 	leftWidth := lipgloss.Width(statusLeft)
 	rightWidth := lipgloss.Width(helpText)
-	
+
 	// If combined width exceeds available space, truncate
-	if leftWidth + rightWidth + 2 > contentWidth {
+	if leftWidth+rightWidth+2 > contentWidth {
 		// Prioritize showing status on left, truncate help on right
 		availableForRight := contentWidth - leftWidth - 2
 		if availableForRight < 20 {
@@ -1224,13 +1231,13 @@ func (m *DashboardModel) renderLogViewerModal() string {
 			helpText = "ESC:Close ↑↓:Nav /:Filter"
 		}
 	}
-	
+
 	// Create properly sized status sections
 	padding := contentWidth - lipgloss.Width(statusLeft) - lipgloss.Width(helpText)
 	if padding < 0 {
 		padding = 0
 	}
-	
+
 	statusBar := lipgloss.NewStyle().
 		Foreground(ColorGray).
 		Width(contentWidth).
@@ -1238,21 +1245,169 @@ func (m *DashboardModel) renderLogViewerModal() string {
 		Height(statusHeight).
 		MaxHeight(statusHeight).
 		Render(statusLeft + strings.Repeat(" ", padding) + helpText)
-	
+
 	// Combine all content
 	content := lipgloss.JoinVertical(lipgloss.Left,
 		header,
 		logArea,
 		statusBar,
 	)
-	
+
 	// Apply border to the content - don't set height to allow content to define size
 	modal := lipgloss.NewStyle().
 		Border(lipgloss.DoubleBorder()).
 		BorderForeground(ColorBlue).
 		Width(modalWidth).
 		Render(content)
-	
+
 	// Center the modal on screen
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, modal)
+}
+
+// renderSeverityFilterModal renders the severity filter selection modal
+func (m *DashboardModel) renderSeverityFilterModal() string {
+	// Calculate dimensions - smaller modal
+	modalWidth := min(m.width-16, 50)  // Smaller width for severity list
+	modalHeight := min(m.height-8, 18) // Smaller height
+
+	// Account for borders and headers
+	contentWidth := modalWidth - 4   // Modal borders
+	contentHeight := modalHeight - 4 // Header + status
+
+	// Define severity levels in order (most critical first)
+	severityLevels := []string{"FATAL", "CRITICAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "UNKNOWN"}
+
+	// Build severity list content
+	var severityLines []string
+
+	// Add "Select All" option at the top
+	selectAllPrefix := "  "
+	if m.severityFilterSelected == 0 {
+		selectAllPrefix = "► "
+	}
+	allSelected := true
+	for _, severity := range severityLevels {
+		if !m.severityFilter[severity] {
+			allSelected = false
+			break
+		}
+	}
+	selectAllStatus := ""
+	if allSelected {
+		selectAllStatus = " ✓"
+	}
+	selectAllLine := selectAllPrefix + "Select All" + selectAllStatus
+
+	// Style the select all line
+	if m.severityFilterSelected == 0 {
+		selectedStyle := lipgloss.NewStyle().
+			Foreground(ColorBlue).
+			Bold(true)
+		selectAllLine = selectedStyle.Render(selectAllLine)
+	}
+	severityLines = append(severityLines, selectAllLine)
+
+	// Add "Select None" option
+	selectNonePrefix := "  "
+	if m.severityFilterSelected == 1 {
+		selectNonePrefix = "► "
+	}
+	noneSelected := true
+	for _, severity := range severityLevels {
+		if m.severityFilter[severity] {
+			noneSelected = false
+			break
+		}
+	}
+	selectNoneStatus := ""
+	if noneSelected {
+		selectNoneStatus = " ✓"
+	}
+	selectNoneLine := selectNonePrefix + "Select None" + selectNoneStatus
+
+	// Style the select none line
+	if m.severityFilterSelected == 1 {
+		selectedStyle := lipgloss.NewStyle().
+			Foreground(ColorBlue).
+			Bold(true)
+		selectNoneLine = selectedStyle.Render(selectNoneLine)
+	}
+	severityLines = append(severityLines, selectNoneLine)
+
+	// Add separator
+	severityLines = append(severityLines, "")
+
+	// Add individual severity levels (starting from index 2)
+	for i, severity := range severityLevels {
+		listIndex := i + 3 // Offset by 3 (select all + select none + separator)
+		prefix := "  "
+		if m.severityFilterSelected == listIndex {
+			prefix = "► "
+		}
+
+		// Show selection status
+		status := ""
+		if m.severityFilter[severity] {
+			status = " ✓"
+		}
+
+		line := prefix + severity + status
+
+		// Apply severity color and selection styling
+		severityColor := getSeverityColor(severity)
+		if m.severityFilterSelected == listIndex {
+			// Highlight selected item
+			selectedStyle := lipgloss.NewStyle().
+				Foreground(ColorBlue).
+				Bold(true)
+			line = selectedStyle.Render(line)
+		} else {
+			// Use severity color for non-selected items
+			severityStyle := lipgloss.NewStyle().
+				Foreground(severityColor)
+			line = severityStyle.Render(line)
+		}
+
+		severityLines = append(severityLines, line)
+	}
+
+	// Create content pane
+	contentPane := lipgloss.NewStyle().
+		Width(contentWidth).
+		Height(contentHeight).
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(ColorBlue).
+		Render(strings.Join(severityLines, "\n"))
+
+	// Header
+	activeCount := 0
+	for _, enabled := range m.severityFilter {
+		if enabled {
+			activeCount++
+		}
+	}
+	headerText := fmt.Sprintf("Severity Filter (%d/%d active)", activeCount, len(severityLevels))
+	header := lipgloss.NewStyle().
+		Width(contentWidth).
+		Foreground(ColorBlue).
+		Bold(true).
+		Render(headerText)
+
+	// Status bar
+	statusBar := lipgloss.NewStyle().
+		Foreground(ColorGray).
+		Render("↑↓: Navigate • Space: Toggle • Enter: Apply/Select • ESC: Cancel")
+
+	// Combine all parts
+	modal := lipgloss.JoinVertical(lipgloss.Left, header, contentPane, statusBar)
+
+	// Add outer border and center
+	finalModal := lipgloss.NewStyle().
+		Width(modalWidth).
+		Height(modalHeight).
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorBlue).
+		Render(modal)
+
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, finalModal)
 }

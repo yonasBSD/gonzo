@@ -51,7 +51,8 @@ A powerful, real-time log analysis terminal UI inspired by k9s. Analyze log stre
 
 - **Regex support** - Filter logs with regular expressions
 - **Attribute search** - Find logs by specific attribute values
-- **Severity filtering** - Focus on errors, warnings, or specific log levels
+- **Severity filtering** - Interactive modal to select specific log levels (Ctrl+f)
+- **Multi-level selection** - Enable/disable multiple severity levels at once
 - **Interactive selection** - Click or keyboard navigate to explore logs
 
 ### 🎨 Customizable Themes
@@ -293,6 +294,7 @@ cat logs.json | gonzo --ai-model="gpt-4"
 | `Space`        | Pause/unpause entire dashboard            |
 | `/`            | Enter filter mode (regex supported)       |
 | `s`            | Search and highlight text in logs         |
+| `Ctrl+f`       | Open severity filter modal                |
 | `f`            | Open fullscreen log viewer modal          |
 | `c`            | Toggle Host/Service columns in log view   |
 | `r`            | Reset all data (manual reset)             |
@@ -318,6 +320,26 @@ cat logs.json | gonzo --ai-model="gpt-4"
 | `c`   | Start chat with AI about current log     |
 | `Tab` | Switch between log details and chat pane |
 | `m`   | Switch AI model (works in modal too)     |
+
+#### Severity Filter Modal
+
+The severity filter modal (`Ctrl+f`) provides fine-grained control over which log levels to display:
+
+| Key                | Action                                            |
+| ------------------ | ------------------------------------------------- |
+| `↑`/`↓` or `k`/`j` | Navigate severity options                         |
+| `Space`            | Toggle selected severity level on/off             |
+| `Enter`            | Apply filter and close modal (or select All/None) |
+| `ESC`              | Cancel changes and close modal                    |
+
+**Features:**
+- **Select All** - Quick option to enable all severity levels (Enter to apply and close)
+- **Select None** - Quick option to disable all severity levels (Enter to apply and close)
+- **Individual toggles** - Enable/disable specific levels (FATAL, ERROR, WARN, INFO, DEBUG, TRACE, etc.)
+- **Color-coded display** - Each severity level shows in its standard color
+- **Real-time count** - Header shows how many levels are currently active
+- **Persistent filtering** - Applied filters remain active until changed
+- **Quick shortcuts** - Press Enter on Select All/None to apply immediately
 
 ### Log Counts Analysis Modal
 
