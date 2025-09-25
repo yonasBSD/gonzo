@@ -371,6 +371,26 @@ func (p *Parser) ExtractField(data map[string]interface{}, extractor FieldExtrac
 	return value
 }
 
+// parseUnixValue extracts an int64 from various types (handles JSON number conversion)
+func parseUnixValue(value interface{}, formatName string) (int64, error) {
+	switch v := value.(type) {
+	case float64:
+		return int64(v), nil
+	case int64:
+		return v, nil
+	case int:
+		return int64(v), nil
+	case string:
+		if i, err := strconv.ParseInt(v, 10, 64); err == nil {
+			return i, nil
+		} else {
+			return 0, fmt.Errorf("failed to parse %s timestamp: %s", formatName, v)
+		}
+	default:
+		return 0, fmt.Errorf("unsupported type for %s timestamp: %T", formatName, value)
+	}
+}
+
 // ParseTimestamp parses a timestamp field according to the format
 func (p *Parser) ParseTimestamp(value interface{}, format string) (time.Time, error) {
 	if value == nil {
@@ -383,18 +403,25 @@ func (p *Parser) ParseTimestamp(value interface{}, format string) (time.Time, er
 	case "", "auto":
 		// Try to auto-detect format
 		return parseTimestampAuto(valueStr)
+	// Protect against numbers or strings for unix, unix_ms and unix_ns types
 	case "unix":
-		if i, err := strconv.ParseInt(valueStr, 10, 64); err == nil {
-			return time.Unix(i, 0), nil
+		seconds, err := parseUnixValue(value, "unix")
+		if err != nil {
+			return time.Time{}, err
 		}
+		return time.Unix(seconds, 0), nil
 	case "unix_ms":
-		if i, err := strconv.ParseInt(valueStr, 10, 64); err == nil {
-			return time.Unix(i/1000, (i%1000)*1e6), nil
+		ms, err := parseUnixValue(value, "unix_ms")
+		if err != nil {
+			return time.Time{}, err
 		}
+		return time.Unix(ms/1000, (ms%1000)*1e6), nil
 	case "unix_ns":
-		if i, err := strconv.ParseInt(valueStr, 10, 64); err == nil {
-			return time.Unix(0, i), nil
+		ns, err := parseUnixValue(value, "unix_ns")
+		if err != nil {
+			return time.Time{}, err
 		}
+		return time.Unix(0, ns), nil	
 	case "rfc3339":
 		return time.Parse(time.RFC3339, valueStr)
 	default:
@@ -402,7 +429,6 @@ func (p *Parser) ParseTimestamp(value interface{}, format string) (time.Time, er
 		return time.Parse(format, valueStr)
 	}
 
-	return time.Time{}, fmt.Errorf("failed to parse timestamp: %s", valueStr)
 }
 
 // parseTimestampAuto tries to automatically detect and parse timestamp format
