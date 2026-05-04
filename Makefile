@@ -32,9 +32,13 @@ PURPLE := \033[0;35m
 CYAN := \033[0;36m
 NC := \033[0m # No Color
 
-.PHONY: all build clean clean-all test test-race test-integration \
+# Code signing (macOS) — set via environment or here
+CODESIGN_IDENTITY ?= -
+
+.PHONY: all build build-tui clean clean-all test test-race test-integration \
         fmt vet lint install uninstall run demo \
-        deps deps-update deps-tidy cross-build release help dev ci info
+        deps deps-update deps-tidy cross-build release help dev ci info \
+        web-deps web-build web-dev web-clean build-signed
 
 # Default target
 all: clean build
@@ -53,16 +57,54 @@ help: ## Show this help message
 	@echo "  make cross-build       # Build for all platforms"
 	@echo "  make install           # Install to GOPATH/bin"
 
+# Web dashboard targets
+web-deps: ## Install web dashboard dependencies
+	@echo "$(BLUE)Installing web dependencies...$(NC)"
+	@cd web && rm -rf node_modules && npm ci
+	@echo "$(GREEN)✓ Web dependencies installed$(NC)"
+
+web-build: web-deps ## Build web dashboard
+	@echo "$(BLUE)Building web dashboard...$(NC)"
+	@cd web && npm run build
+	@echo "$(GREEN)✓ Web dashboard built$(NC)"
+
+web-dev: web-deps ## Start web dev server with API proxy
+	@echo "$(BLUE)Starting web dev server...$(NC)"
+	@cd web && npm run dev
+
+web-clean: ## Clean web build artifacts
+	@echo "$(BLUE)Cleaning web artifacts...$(NC)"
+	@rm -rf web/dist web/node_modules
+	@echo "$(GREEN)✓ Web artifacts cleaned$(NC)"
+
+# Ensure web/dist exists for go:embed (stub if not built)
+ensure-web-dist:
+	@mkdir -p web/dist
+	@test -f web/dist/index.html || echo '<!DOCTYPE html><html><body></body></html>' > web/dist/index.html
+
 # Build targets
-build: deps ## Build the TUI binary
-	@echo "$(BLUE)Building TUI version...$(NC)"
+build: deps web-build ## Build binary with embedded web dashboard
+	@echo "$(BLUE)Building Gonzo with web dashboard...$(NC)"
 	@mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
 		$(GO) build $(BUILD_FLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) $(CMD_DIR)
 	@echo "$(GREEN)✓ Built $(BUILD_DIR)/$(BINARY_NAME)$(NC)"
 
+build-signed: build ## Build and codesign for macOS (set CODESIGN_IDENTITY for distribution)
+	@echo "$(BLUE)Signing $(BUILD_DIR)/$(BINARY_NAME)...$(NC)"
+	@codesign --force --options runtime --sign "$(CODESIGN_IDENTITY)" --timestamp $(BUILD_DIR)/$(BINARY_NAME)
+	@echo "$(GREEN)✓ Signed $(BUILD_DIR)/$(BINARY_NAME)$(NC)"
+	@codesign -dvv $(BUILD_DIR)/$(BINARY_NAME) 2>&1 | head -5
+
+build-tui: deps ensure-web-dist ## Build TUI-only binary (placeholder web dashboard)
+	@echo "$(BLUE)Building TUI-only version...$(NC)"
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
+		$(GO) build $(BUILD_FLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) $(CMD_DIR)
+	@echo "$(GREEN)✓ Built $(BUILD_DIR)/$(BINARY_NAME) (TUI only)$(NC)"
+
 # Cross-platform builds
-cross-build: clean deps ## Build for multiple platforms
+cross-build: clean deps ensure-web-dist ## Build for multiple platforms
 	@echo "$(BLUE)Building for multiple platforms...$(NC)"
 	@mkdir -p $(DIST_DIR)
 	
@@ -108,11 +150,11 @@ deps-tidy: ## Clean up dependencies
 	@$(GO) mod tidy
 
 # Testing
-test: deps ## Run tests
+test: deps ensure-web-dist ## Run tests
 	@echo "$(BLUE)Running tests...$(NC)"
 	@$(GO) test -v ./...
 
-test-race: deps ## Run tests with race detection
+test-race: deps ensure-web-dist ## Run tests with race detection
 	@echo "$(BLUE)Running tests with race detection...$(NC)"
 	@$(GO) test -race -v ./...
 
@@ -142,7 +184,7 @@ fmt: ## Format code
 	@echo "$(BLUE)Formatting code...$(NC)"
 	@$(GO) fmt ./...
 
-vet: ## Run go vet
+vet: ensure-web-dist ## Run go vet
 	@echo "$(BLUE)Running go vet...$(NC)"
 	@$(GO) vet ./...
 
@@ -211,6 +253,7 @@ clean: ## Clean build artifacts
 	@echo "$(BLUE)Cleaning build artifacts...$(NC)"
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(DIST_DIR)
+	@rm -rf web/dist
 	@rm -f $(BINARY_NAME)
 	@echo "$(GREEN)✓ Cleaned$(NC)"
 
