@@ -5,9 +5,7 @@
 
 # Gonzo - The Go based TUI for log analysis
 
-📢 **LIVE SESSION RECORDING NOW AVAILABLE:**  
-**Gonzo Roadmap & Pro Tips Live Demo with Maintainers**  
-[Watch here](https://www.controltheory.com/videos/gonzo-roadmap-and-pro-tips-live-demo-session/)
+🆕 **NEW:** Press `d` from any Gonzo view to launch [Dstl8.Lite](#dstl8-lite) ↓ - a local browser-based dashboard with workspaces, log search, and severity heatmaps.
 
 <p align="center"><img src="docs/gonzo-mascot-smaller.png" width="250" alt="Gonzo Mascot"></p>
 
@@ -17,7 +15,7 @@
 [![Docs](https://img.shields.io/badge/Docs-Getting%20Started-cyan.svg)](https://docs.controltheory.com/)
 
 
-A powerful, real-time log analysis terminal UI inspired by k9s. Analyze log streams with beautiful charts, AI-powered insights, and advanced filtering - all from your terminal.
+A powerful, real-time log analysis terminal UI inspired by k9s. Analyze log streams with beautiful charts, AI-powered insights, and advanced filtering.
 
 Here are some references to get you started:
 
@@ -43,6 +41,24 @@ Here are some references to get you started:
 ### Everyone loves a heatmap
 
 ![Gonzo Heatmap](docs/gonzo-heatmap.png)
+
+<a id="dstl8-lite"></a>
+
+### Press `d` for Dstl8.Lite
+
+Hit `d` from any Gonzo view to launch Dstl8.Lite - a local GUI that streams the same logs Gonzo is analyzing into a richer, browser-based dashboard with workspaces, pattern detection, severity heatmaps, and live log search. All running locally and powered by Gonzo under the hood.
+
+<p align="center">
+  <img src="docs/dstl8-lite-live-logs.gif" alt="Dstl8.Lite Live Logs">
+</p>
+
+#### Log viewer with severity filtering and live search
+
+![Dstl8.Lite Logs](docs/dstl8-lite-logs.png)
+
+#### Severity heatmap across pods
+
+![Dstl8.Lite Heatmap](docs/dstl8-lite-heatmap-by-pod.png)
 
 ## ✨ Features
 
@@ -178,6 +194,8 @@ docker logs -f my-container 2>&1 | gonzo
 # With AI analysis (requires API key)
 export OPENAI_API_KEY=sk-your-key-here
 gonzo -f application.log --ai-model="gpt-4"
+
+# Press `d` once Gonzo is running to launch the Dstl8.Lite GUI in your browser
 ```
 
 ### Custom Log Formats
@@ -362,6 +380,7 @@ All data updates in real-time via WebSocket, matching what you see in the TUI.
 | `Space`        | Pause/unpause entire dashboard            |
 | `/`            | Enter filter mode (regex supported)       |
 | `s`            | Search and highlight text in logs         |
+| `d`            | Launch Dstl8.Lite GUI in browser          |
 | `Ctrl+f`       | Open severity filter modal                |
 | `Ctrl+k`       | Open Kubernetes filter modal (k8s mode)   |
 | `f`            | Open fullscreen log viewer modal          |
@@ -934,6 +953,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Web Dashboard](guides/WEB_DASHBOARD_USAGE.md) - Dstl8 Lite web UI setup
 - [Contributing Guide](CONTRIBUTING.md) - How to contribute
 - [Changelog](CHANGELOG.md) - Version history
+
+## 🎥 Talks & Demos
+
+* **[Gonzo Roadmap & Pro Tips Live Demo with Maintainers](https://www.controltheory.com/videos/gonzo-roadmap-and-pro-tips-live-demo-session/)** - Live session covering the roadmap, advanced features, and Q&A with the maintainers
 
 ## 💬 Slack Community
 
